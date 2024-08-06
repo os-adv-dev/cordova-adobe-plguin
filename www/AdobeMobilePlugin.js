@@ -1,47 +1,17 @@
-var AdobeMobileExtension = (function() {
-    var exec = require('cordova/exec');
-	var AdobeMobileExtension = (typeof exports !== 'undefined') && exports || {};
-	// ===========================================================================
-	// public APIs
-	// ===========================================================================
+var exec = require('cordova/exec');
 
-    // Sent Event to Adobe Experience Portal
-    AdobeMobileExtension.extensionVersion = function (success, error) {
-        var FUNCTION_NAME = "sendEvent";
+exports.configureWithAppID = function (success, error, args) {
+    exec(success, error, 'AdobeMobilePlugin', 'configureWithAppID', [args]);
+};
 
-        if (success && !isFunction(success)) {
-            printNotAFunction("success", FUNCTION_NAME);
-            return;
-        }
+exports.getConsents = function (success, error) {
+    exec(success, error, 'AdobeMobilePlugin', 'getConsents');
+};
 
-        if (error && !isFunction(error)) {
-            printNotAFunction("error", FUNCTION_NAME);
-            return;
-        }
+exports.lifecycleStart = function (success, error) {
+    exec(success, error, 'AdobeMobilePlugin', 'lifecycleStart');
+};
 
-        exec(success, error, 'AdobeMobileExtension', FUNCTION_NAME, []);
-    };
-
-	return AdobeMobileExtension;
-}());
-
-// ===========================================================================
-// helper functions
-// ===========================================================================
-function isString(value) {
-    return typeof value === 'string' || value instanceof String;
-}
-
-function printNotAString(paramName, functionName) {
-    console.log("Ignoring call to '" + functionName + "'. The '" + paramName + "' parameter is required to be a String.");
-}
-
-function isFunction (value) {
-    return typeof value === 'function';
-}
-
-function printNotAFunction(paramName, functionName) {
-    console.log("Ignoring call to '" + functionName + "'. The '" + paramName + "' parameter is required to be a function.");
-}
-
-module.exports = AdobeMobileExtension;
+exports.lifecyclePause = function (success, error) {
+    exec(success, error, 'AdobeMobilePlugin', 'lifecyclePause');
+};

@@ -22,12 +22,11 @@
  import com.adobe.marketing.mobile.MobileCore;
  import com.adobe.marketing.mobile.edge.consent.Consent;
  import com.adobe.marketing.mobile.edge.identity.Identity;
- 
- import org.apache.cordova.CordovaInterface;
+
+ import org.apache.cordova.ConfigXmlParser;
  import org.apache.cordova.CordovaPlugin;
  import org.apache.cordova.CallbackContext;
  
- import org.apache.cordova.CordovaWebView;
  import org.json.JSONArray;
  import org.json.JSONObject;
  
@@ -35,28 +34,32 @@
  import java.util.List;
  
  public class AdobeMobilePlugin extends CordovaPlugin {
- 
-     @Override
-     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
-         super.initialize(cordova, webView);
- 
-         String applicationID = ""; // get from extensibility configuration
- 
-         MobileCore.setApplication(cordova.getActivity().getApplication());
-         MobileCore.configureWithAppID(applicationID);
- 
-         List<Class<? extends Extension>> extensions = Arrays.asList(
-             Edge.EXTENSION,
-             Consent.EXTENSION,
-             Lifecycle.EXTENSION,
-             Identity.EXTENSION
-         );
- 
-         MobileCore.registerExtensions(extensions, o -> Log.d(LOG_TAG, "AEP Mobile SDK is initialized"));
-     }
- 
+
+     private static final String ADOBE_SDK_APP_ID = "ADOBE_SDK_APP_ID";
+
      @Override
      public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
+         if("configureWithAppID".equals(action)) {
+             try {
+                 String applicationID = getValueFromPreferences();
+                 MobileCore.configureWithAppID(applicationID);
+
+                 List<Class<? extends Extension>> extensions = Arrays.asList(
+                         Edge.EXTENSION,
+                         Consent.EXTENSION,
+                         Lifecycle.EXTENSION,
+                         Identity.EXTENSION
+                 );
+
+                 MobileCore.registerExtensions(extensions, o -> Log.d(LOG_TAG, "AEP Mobile SDK is initialized"));
+                 callbackContext.success("Adobe SDK is initialized with success!");
+             } catch (Exception ex) {
+                 callbackContext.error("You need to pass the application ID to the Adobe SDK initialization");
+             }
+
+             return true;
+         }
+
          if ("getConsents".equals(action)) {
              getConsents(callbackContext);
              return true;
@@ -74,7 +77,7 @@
  
          return false;
      }
- 
+
      private void getConsents(final CallbackContext callbackContext) {
          cordova.getThreadPool().execute(() -> Consent.getConsents(consents -> {
              JSONObject jsonObject = new JSONObject(consents);
@@ -100,5 +103,11 @@
                  callbackContext.success();
              }
          });
+     }
+
+     private String getValueFromPreferences() {
+         ConfigXmlParser parser = new ConfigXmlParser();
+         parser.parse(this.cordova.getActivity());
+         return parser.getPreferences().getString(AdobeMobilePlugin.ADOBE_SDK_APP_ID, "");
      }
  }
