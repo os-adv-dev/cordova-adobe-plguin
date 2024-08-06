@@ -1,0 +1,8 @@
+dependencies {
+    // Add dependency to Adobe EDGE
+    implementation 'com.adobe.marketing.mobile:edge:3.0.0'
+    // Add dependency to Adobe Messaging
+    implementation 'com.adobe.marketing.mobile:messaging:3.1.0'
+    // Add dependency to Edge Consent
+    implementation 'com.adobe.marketing.mobile:edgeconsent:3.0.0'
+}

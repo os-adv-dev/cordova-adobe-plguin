@@ -1,0 +1,23 @@
+{
+  "name": "@adobe/cordova-adobe-plugin",
+  "version": "0.0.1",
+  "description": "Adobe plguin - Adobe SDK to use Core, Edge, Consent and Messagings plugins for Cordova apps.",
+  "cordova": {
+    "id": "cordova-adobe-plugin",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "adobe",
+    "analytics",
+    "acpanalytics",
+    "marketing",
+    "cordova-android",
+    "cordova-ios"
+  ],
+  "author": "Adobe",
+  "license": "Apache 2.0"
+}
