@@ -13,23 +13,18 @@
 
 
  import static com.adobe.marketing.mobile.messaging.MessagingConstants.LOG_TAG;
- 
  import android.util.Log;
- 
  import com.adobe.marketing.mobile.Edge;
  import com.adobe.marketing.mobile.Extension;
  import com.adobe.marketing.mobile.Lifecycle;
  import com.adobe.marketing.mobile.MobileCore;
  import com.adobe.marketing.mobile.edge.consent.Consent;
  import com.adobe.marketing.mobile.edge.identity.Identity;
-
- import org.apache.cordova.ConfigXmlParser;
  import org.apache.cordova.CordovaPlugin;
  import org.apache.cordova.CallbackContext;
- 
+ import org.apache.cordova.CordovaPreferences;
  import org.json.JSONArray;
  import org.json.JSONObject;
- 
  import java.util.Arrays;
  import java.util.List;
  
@@ -41,9 +36,14 @@
      public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
          if("configureWithAppID".equals(action)) {
              try {
-                 String applicationID = getValueFromPreferences();
-                 MobileCore.configureWithAppID(applicationID);
 
+                 String applicationID = getValueFromPreferences();
+                 if(applicationID == null || applicationID.isEmpty()) {
+                     callbackContext.error("You need to pass the application ID to the Adobe SDK initialization");
+                     return true;
+                 }
+
+                 MobileCore.configureWithAppID(applicationID);
                  List<Class<? extends Extension>> extensions = Arrays.asList(
                          Edge.EXTENSION,
                          Consent.EXTENSION,
@@ -56,7 +56,6 @@
              } catch (Exception ex) {
                  callbackContext.error("You need to pass the application ID to the Adobe SDK initialization");
              }
-
              return true;
          }
 
@@ -106,8 +105,7 @@
      }
 
      private String getValueFromPreferences() {
-         ConfigXmlParser parser = new ConfigXmlParser();
-         parser.parse(this.cordova.getActivity());
-         return parser.getPreferences().getString(AdobeMobilePlugin.ADOBE_SDK_APP_ID, "");
+         CordovaPreferences preferences = this.preferences;
+         return preferences.getString(AdobeMobilePlugin.ADOBE_SDK_APP_ID, "");
      }
  }
