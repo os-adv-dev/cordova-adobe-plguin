@@ -9,148 +9,96 @@
  governing permissions and limitations under the License.
  */
 
-package com.adobe.marketing.mobile.cordova;
+ package com.adobe.marketing.mobile.cordova;
 
-import android.os.Handler;
-import android.os.Looper;
 
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.CallbackContext;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import com.adobe.marketing.mobile.Analytics;
-import com.adobe.marketing.mobile.AdobeCallback;
-
-/**
- * This class echoes a string called from JavaScript.
- */
-public class AdobeMobilePlugin extends CordovaPlugin {
-
-    @Override
-    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
-
-        if ("extensionVersion".equals(action)) {
-            extensionVersion(callbackContext);
-            return true;
-        } else if ("sendQueuedHits".equals((action))) {
-            sendQueuedHits(callbackContext);
-            return true;
-        } else if ("clearQueue".equals((action))) {
-            clearQueue(callbackContext);
-            return true;
-        } else if ("getQueueSize".equals((action))) {
-            getQueueSize(callbackContext);
-            return true;
-        } else if ("getTrackingIdentifier".equals((action))) {
-            getTrackingIdentifier(callbackContext);
-            return true;
-        } else if ("getVisitorIdentifier".equals((action))) {
-            getVisitorIdentifier(callbackContext);
-            return true;
-        } else if ("setVisitorIdentifier".equals((action))) {
-            setVisitorIdentifier(args, callbackContext);
-            return true;
-        }
-
-        return false;
-    }
-
-    private void extensionVersion(final CallbackContext callbackContext) {
-        cordova.getThreadPool().execute(new Runnable() {
-            @Override
-            public void run() {
-                String extensionVersion = Analytics.extensionVersion();
-                if (extensionVersion.length() > 0) {
-                    callbackContext.success(extensionVersion);
-                } else {
-                    callbackContext.error("Extension version is null or empty");
-                }
-            }
-        });
-    }
-
-    private void sendQueuedHits(final CallbackContext callbackContext) {
-        cordova.getThreadPool().execute(new Runnable() {
-            @Override
-            public void run() {
-                Analytics.sendQueuedHits();
-                callbackContext.success();
-            }
-        });
-    }
-
-    private void clearQueue(final CallbackContext callbackContext) {
-        cordova.getThreadPool().execute(new Runnable() {
-            @Override
-            public void run() {
-                Analytics.clearQueue();
-                callbackContext.success();
-            }
-        });
-    }
-
-    private void getQueueSize(final CallbackContext callback) {
-        cordova.getThreadPool().execute(new Runnable() {
-            @Override
-            public void run() {
-                Analytics.getQueueSize(new AdobeCallback<Long>() {
-                    @Override
-                    public void call(final Long queueSize) {
-                        callback.success(String.valueOf(queueSize));
-                    }
-                });
-            }
-        });
-    }
-
-    private void getTrackingIdentifier(final CallbackContext callbackContext) {
-        cordova.getThreadPool().execute(new Runnable() {
-            @Override
-            public void run() {
-                Analytics.getTrackingIdentifier(new AdobeCallback<String>() {
-                    @Override
-                    public void call(final String trackingIdentifier) {
-                        callbackContext.success(trackingIdentifier);
-                    }
-                });
-            }
-        });
-    }
-
-    private void getVisitorIdentifier(final CallbackContext callbackContext) {
-        cordova.getThreadPool().execute(new Runnable() {
-            @Override
-            public void run() {
-                Analytics.getVisitorIdentifier(new AdobeCallback<String>() {
-                    @Override
-                    public void call(final String visitorIdentifier) {
-                        callbackContext.success(visitorIdentifier);
-                    }
-                });
-            }
-        });
-    }
-
-    private void setVisitorIdentifier(final JSONArray arguments, final CallbackContext callbackContext) {
-        cordova.getThreadPool().execute(new Runnable() {
-            @Override
-            public void run() {
-                if (arguments == null || arguments.length() <= 0) {
-                    callbackContext.error("Visitor Id is null or empty");
-                    return;
-                }
-                String visitorId;
-                try {
-                    visitorId = arguments.getString(0);
-                } catch (JSONException e) {
-                    callbackContext.error("Error while parsing arguments, Error " + e.getLocalizedMessage());
-                    return;
-                }
-                Analytics.setVisitorIdentifier(visitorId);
-                callbackContext.success();
-            }
-        });
-    }
-}
+ import static com.adobe.marketing.mobile.messaging.MessagingConstants.LOG_TAG;
+ 
+ import android.util.Log;
+ 
+ import com.adobe.marketing.mobile.Edge;
+ import com.adobe.marketing.mobile.Extension;
+ import com.adobe.marketing.mobile.Lifecycle;
+ import com.adobe.marketing.mobile.MobileCore;
+ import com.adobe.marketing.mobile.edge.consent.Consent;
+ import com.adobe.marketing.mobile.edge.identity.Identity;
+ 
+ import org.apache.cordova.CordovaInterface;
+ import org.apache.cordova.CordovaPlugin;
+ import org.apache.cordova.CallbackContext;
+ 
+ import org.apache.cordova.CordovaWebView;
+ import org.json.JSONArray;
+ import org.json.JSONObject;
+ 
+ import java.util.Arrays;
+ import java.util.List;
+ 
+ public class AdobeMobilePlugin extends CordovaPlugin {
+ 
+     @Override
+     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+         super.initialize(cordova, webView);
+ 
+         String applicationID = ""; // get from extensibility configuration
+ 
+         MobileCore.setApplication(cordova.getActivity().getApplication());
+         MobileCore.configureWithAppID(applicationID);
+ 
+         List<Class<? extends Extension>> extensions = Arrays.asList(
+             Edge.EXTENSION,
+             Consent.EXTENSION,
+             Lifecycle.EXTENSION,
+             Identity.EXTENSION
+         );
+ 
+         MobileCore.registerExtensions(extensions, o -> Log.d(LOG_TAG, "AEP Mobile SDK is initialized"));
+     }
+ 
+     @Override
+     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
+         if ("getConsents".equals(action)) {
+             getConsents(callbackContext);
+             return true;
+         }
+ 
+         if ("lifecycleStart".equals(action)) {
+             lifecycleStart(callbackContext);
+             return true;
+         }
+ 
+         if ("lifecyclePause".equals(action)) {
+             lifecyclePause(callbackContext);
+             return true;
+         }
+ 
+         return false;
+     }
+ 
+     private void getConsents(final CallbackContext callbackContext) {
+         cordova.getThreadPool().execute(() -> Consent.getConsents(consents -> {
+             JSONObject jsonObject = new JSONObject(consents);
+             callbackContext.success(jsonObject);
+         }));
+     }
+ 
+     private void lifecycleStart(final CallbackContext callbackContext) {
+         cordova.getThreadPool().execute(new Runnable() {
+             @Override
+             public void run() {
+                 MobileCore.lifecycleStart(null);
+                 callbackContext.success();
+             }
+         });
+     }
+ 
+     private void lifecyclePause(final CallbackContext callbackContext) {
+         cordova.getThreadPool().execute(new Runnable() {
+             @Override
+             public void run() {
+                 MobileCore.lifecyclePause();
+                 callbackContext.success();
+             }
+         });
+     }
+ }
