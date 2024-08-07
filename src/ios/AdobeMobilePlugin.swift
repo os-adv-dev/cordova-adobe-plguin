@@ -29,7 +29,9 @@ import AEPEdgeIdentity
             guard error == nil, let consents = consents else { return }
             guard let jsonData = try? JSONSerialization.data(withJSONObject: consents, options: .prettyPrinted) else { return }
             guard let jsonStr = String(data: jsonData, encoding: .utf8) else { return }
-            print(jsonStr)
+            print("---- Consent.getConsents :: "+jsonStr)
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: jsonStr)
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         }
     }
 
