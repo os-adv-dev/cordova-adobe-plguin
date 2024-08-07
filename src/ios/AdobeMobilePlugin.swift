@@ -1,10 +1,9 @@
 import Foundation
-import Cordova
-import ACPCore
-import ACPIdentity
-import ACPLifecycle
-import ACPConsent
-import ACPEdge
+import AEPCore
+import AEPEdge
+import AEPEdgeConsent
+import AEPLifecycle
+import AEPEdgeIdentity
 
 @objc(AdobeMobilePlugin) class AdobeMobilePlugin: CDVPlugin {
 
@@ -16,46 +15,28 @@ import ACPEdge
             return
         }
 
-        ACPCore.configure(withAppId: applicationID)
-
-        let extensions: [AnyClass] = [
-            ACPEdge.self,
-            ACPConsent.self,
-            ACPLifecycle.self,
-            ACPIdentity.self
-        ]
-
-        ACPCore.registerExtensions(extensions) {
-            print("AEP Mobile SDK is initialized")
-        }
-
-        let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Adobe SDK is initialized with success!")
-        self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+        MobileCore.registerExtensions([Identity.self, Edge.self, Consent.self, Lifecycle.self], {
+           MobileCore.configureWith(appId: applicationID)
+            
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Adobe SDK is initialized with success!")
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+        })
     }
 
     @objc(getConsents:)
     func getConsents(command: CDVInvokedUrlCommand) {
-        ACPConsent.getConsents { consents, error in
-            if let error = error {
-                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: error.localizedDescription)
-                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
-                return
-            }
-
-            if let consents = consents, let jsonObject = try? JSONSerialization.jsonObject(with: consents, options: []) as? [String: Any] {
-                let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: jsonObject)
-                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
-            } else {
-                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Failed to get consents")
-                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
-            }
+        Consent.getConsents { consents, error in
+            guard error == nil, let consents = consents else { return }
+            guard let jsonData = try? JSONSerialization.data(withJSONObject: consents, options: .prettyPrinted) else { return }
+            guard let jsonStr = String(data: jsonData, encoding: .utf8) else { return }
+            print(jsonStr)
         }
     }
 
     @objc(lifecycleStart:)
     func lifecycleStart(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
-            ACPCore.lifecycleStart(nil)
+            MobileCore.lifecycleStart(additionalContextData: nil)
             let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
             self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         }
@@ -64,7 +45,7 @@ import ACPEdge
     @objc(lifecyclePause:)
     func lifecyclePause(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
-            ACPCore.lifecyclePause()
+            MobileCore.lifecyclePause()
             let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
             self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         }
