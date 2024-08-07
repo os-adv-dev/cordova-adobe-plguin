@@ -22,22 +22,18 @@
  import com.adobe.marketing.mobile.edge.identity.Identity;
  import org.apache.cordova.CordovaPlugin;
  import org.apache.cordova.CallbackContext;
- import org.apache.cordova.CordovaPreferences;
- import org.json.JSONArray;
  import org.json.JSONObject;
  import java.util.Arrays;
  import java.util.List;
  
  public class AdobeMobilePlugin extends CordovaPlugin {
 
-     private static final String ADOBE_SDK_APP_ID = "ADOBE_SDK_APP_ID";
-
      @Override
      public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
          if("configureWithAppID".equals(action)) {
              try {
 
-                 String applicationID = getValueFromPreferences();
+                 String applicationID = args.getString(0);
                  if(applicationID == null || applicationID.isEmpty()) {
                      callbackContext.error("You need to pass the application ID to the Adobe SDK initialization");
                      return true;
@@ -102,10 +98,5 @@
                  callbackContext.success();
              }
          });
-     }
-
-     private String getValueFromPreferences() {
-         CordovaPreferences preferences = this.preferences;
-         return preferences.getString(AdobeMobilePlugin.ADOBE_SDK_APP_ID, "");
      }
  }
