@@ -16,9 +16,9 @@ import AEPEdgeIdentity
                 return
             }
             
+            MobileCore.configureWith(appId: applicationID)
+            
             MobileCore.registerExtensions([Identity.self, Edge.self, Consent.self, Lifecycle.self], {
-                MobileCore.configureWith(appId: applicationID)
-                
                 let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Adobe SDK is initialized with success!")
                 self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
             })
@@ -30,7 +30,13 @@ import AEPEdgeIdentity
         DispatchQueue.global().async {
             Consent.getConsents { consents, error in
                 
-                guard error == nil, let consents = consents else { return }
+                guard error == nil, let consents = consents else {
+                
+                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Error to get getConsents \(error?.localizedDescription ?? "getConsents without data to return")")
+                    self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+                    return
+                }
+                
                 guard let jsonData = try? JSONSerialization.data(withJSONObject: consents, options: .prettyPrinted) else { return }
                 guard let jsonStr = String(data: jsonData, encoding: .utf8) else { return }
                 

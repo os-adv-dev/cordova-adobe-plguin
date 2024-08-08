@@ -12,22 +12,23 @@
  package com.adobe.marketing.mobile.cordova;
 
 
- import static com.adobe.marketing.mobile.messaging.MessagingConstants.LOG_TAG;
- import android.util.Log;
+ import com.adobe.marketing.mobile.AdobeCallbackWithError;
+ import com.adobe.marketing.mobile.AdobeError;
  import com.adobe.marketing.mobile.Edge;
  import com.adobe.marketing.mobile.Extension;
  import com.adobe.marketing.mobile.Lifecycle;
  import com.adobe.marketing.mobile.MobileCore;
  import com.adobe.marketing.mobile.edge.consent.Consent;
- import com.adobe.marketing.mobile.edge.identity.Identity;
+ import com.adobe.marketing.mobile.Identity;
  import org.apache.cordova.CordovaPlugin;
  import org.apache.cordova.CallbackContext;
  import org.json.JSONArray;
  import org.json.JSONObject;
  import java.util.Arrays;
  import java.util.List;
- 
- public class AdobeMobilePlugin extends CordovaPlugin {
+ import java.util.Map;
+
+public class AdobeMobilePlugin extends CordovaPlugin {
 
      @Override
      public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
@@ -41,6 +42,7 @@
                  }
 
                  MobileCore.configureWithAppID(applicationID);
+
                  List<Class<? extends Extension>> extensions = Arrays.asList(
                          Edge.EXTENSION,
                          Consent.EXTENSION,
@@ -48,8 +50,17 @@
                          Identity.EXTENSION
                  );
 
-                 MobileCore.registerExtensions(extensions, o -> Log.d(LOG_TAG, "AEP Mobile SDK is initialized"));
-                 callbackContext.success("Adobe SDK is initialized with success!");
+                 MobileCore.registerExtensions(extensions, new AdobeCallbackWithError<Object>() {
+                     @Override
+                     public void fail(AdobeError adobeError) {
+                         callbackContext.success("Error to initialize "+adobeError.getErrorName());
+                     }
+
+                     @Override
+                     public void call(Object o) {
+                         callbackContext.success("Adobe SDK is initialized with success!");
+                     }
+                 });
              } catch (Exception ex) {
                  callbackContext.error("You need to pass the application ID to the Adobe SDK initialization");
              }
@@ -75,10 +86,18 @@
      }
 
      private void getConsents(final CallbackContext callbackContext) {
-         cordova.getThreadPool().execute(() -> Consent.getConsents(consents -> {
-             JSONObject jsonObject = new JSONObject(consents);
-             callbackContext.success(jsonObject);
-         }));
+         Consent.getConsents(new AdobeCallbackWithError<Map<String, Object>>() {
+             @Override
+             public void fail(AdobeError adobeError) {
+                 callbackContext.success("Error to get getConsents "+adobeError.getErrorName());
+             }
+
+             @Override
+             public void call(Map<String, Object> consents) {
+                 JSONObject jsonObject = new JSONObject(consents);
+                 callbackContext.success(jsonObject);
+             }
+         });
      }
  
      private void lifecycleStart(final CallbackContext callbackContext) {
