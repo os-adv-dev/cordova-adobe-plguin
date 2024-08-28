@@ -8,6 +8,10 @@ exports.getConsents = function (success, error) {
     exec(success, error, 'AdobeMobilePlugin', 'getConsents');
 };
 
+exports.updateConsents = function (args, success, error) {
+    exec(success, error, 'AdobeMobilePlugin', 'updateConsents', [args]);
+};
+
 exports.lifecycleStart = function (success, error) {
     exec(success, error, 'AdobeMobilePlugin', 'lifecycleStart');
 };

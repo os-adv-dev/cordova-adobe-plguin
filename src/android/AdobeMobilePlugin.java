@@ -23,8 +23,10 @@
  import org.apache.cordova.CordovaPlugin;
  import org.apache.cordova.CallbackContext;
  import org.json.JSONArray;
+ import org.json.JSONException;
  import org.json.JSONObject;
  import java.util.Arrays;
+ import java.util.HashMap;
  import java.util.List;
  import java.util.Map;
 
@@ -81,6 +83,11 @@ public class AdobeMobilePlugin extends CordovaPlugin {
              lifecyclePause(callbackContext);
              return true;
          }
+
+         if ("updateConsents".equals(action)) {
+             updateConsents(args, callbackContext);
+             return true;
+         }
  
          return false;
      }
@@ -89,7 +96,7 @@ public class AdobeMobilePlugin extends CordovaPlugin {
          Consent.getConsents(new AdobeCallbackWithError<Map<String, Object>>() {
              @Override
              public void fail(AdobeError adobeError) {
-                 callbackContext.success("Error to get getConsents "+adobeError.getErrorName());
+                 callbackContext.error("Error to get getConsents "+adobeError.getErrorName());
              }
 
              @Override
@@ -98,6 +105,48 @@ public class AdobeMobilePlugin extends CordovaPlugin {
                  callbackContext.success(jsonObject);
              }
          });
+     }
+
+     private void updateConsents(JSONArray args, CallbackContext callbackContext) {
+         try {
+             if (args == null || args.getString(0) == null) {
+                 callbackContext.error("The argument Opt-In/Out-Out cannot be empty!");
+             } else {
+                 Consent.getConsents(new AdobeCallbackWithError<Map<String, Object>>() {
+                     @Override
+                     public void fail(AdobeError adobeError) {
+                         callbackContext.error("Error to get update consents cause "+adobeError.getErrorName());
+                     }
+
+                     @Override
+                     public void call(Map<String, Object> consents) {
+                         if (consents.isEmpty()) {
+                             callbackContext.error("Consents is empty, no updated!");
+                         } else {
+
+                             try {
+                                 String value = args.getString(0);
+
+                                 final Map<String, Object> collectConsents = new HashMap<>();
+                                 collectConsents.put("collect", new HashMap<String, String>() {
+                                     {
+                                         put("val", value);
+                                     }
+                                 });
+                                 consents.put("consents", collectConsents);
+
+                                 Consent.update(consents);
+                                 callbackContext.success();
+                             } catch (JSONException e) {
+                                 callbackContext.error("The argument Opt-In/Out-Out cannot be empty!");
+                             }
+                         }
+                     }
+                 });
+             }
+         } catch (Exception ex) {
+             callbackContext.error("Error to get update consents cause "+ex.getMessage());
+         }
      }
  
      private void lifecycleStart(final CallbackContext callbackContext) {
