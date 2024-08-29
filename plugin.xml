@@ -24,9 +24,21 @@
                 <param name="onload" value="true" />
             </feature>
         </config-file>
-        <config-file parent="/*" target="AndroidManifest.xml" />
+        
+        <!-- Add the service to the AndroidManifest.xml -->
+        <config-file parent="/manifest/application" target="AndroidManifest.xml">
+            <service
+                android:name="com.adobe.marketing.mobile.cordova.AdobeMobileFirebaseMessaging"
+                android:exported="false">
+                <intent-filter>
+                    <action android:name="com.google.firebase.MESSAGING_EVENT" />
+                </intent-filter>
+            </service>
+        </config-file>
+
         <!-- plugin source -->
         <source-file src="src/android/AdobeMobilePlugin.java" target-dir="src/com/adobe/marketing/mobile/cordova" />
+        <source-file src="src/android/AdobeMobileFirebaseMessaging.java" target-dir="src/com/adobe/marketing/mobile/cordova" />
         <!-- dependencies managed through included gradle file -->
         <framework custom="true" src="src/android/adobe-extension.gradle" type="gradleReference" />
     </platform>
