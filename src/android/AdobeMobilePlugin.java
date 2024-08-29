@@ -107,6 +107,21 @@
              return true;
          }
  
+         if("setPushIdentifier".equals(action)) {
+             try {
+                 String token = args.getString(0);
+                 if (token == null) {
+                     callbackContext.error("You need to pass the token to use push registration");
+                 } else {
+                     MobileCore.setPushIdentifier(token);
+                     callbackContext.success();
+                 }
+             } catch (Exception ex) {
+                 callbackContext.error("You need to pass the token to use push registration");
+             }
+             return true;
+         }
+ 
          return false;
      }
  

@@ -12,6 +12,14 @@ exports.updateConsents = function (args, success, error) {
     exec(success, error, 'AdobeMobilePlugin', 'updateConsents', [args]);
 };
 
+exports.startSession = function (args, success, error) {
+    exec(success, error, 'AdobeMobilePlugin', 'startSession', [args]);
+};
+
+exports.setPushIdentifier = function (args, success, error) {
+    exec(success, error, 'AdobeMobilePlugin', 'setPushIdentifier', [args]);
+};
+
 exports.lifecycleStart = function (success, error) {
     exec(success, error, 'AdobeMobilePlugin', 'lifecycleStart');
 };
