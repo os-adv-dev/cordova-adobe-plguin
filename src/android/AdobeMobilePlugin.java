@@ -14,52 +14,65 @@
 
  import com.adobe.marketing.mobile.AdobeCallbackWithError;
  import com.adobe.marketing.mobile.AdobeError;
+ import com.adobe.marketing.mobile.Assurance;
  import com.adobe.marketing.mobile.Edge;
  import com.adobe.marketing.mobile.Extension;
  import com.adobe.marketing.mobile.Lifecycle;
  import com.adobe.marketing.mobile.MobileCore;
  import com.adobe.marketing.mobile.edge.consent.Consent;
- import com.adobe.marketing.mobile.Identity;
+ 
  import org.apache.cordova.CordovaPlugin;
  import org.apache.cordova.CallbackContext;
  import org.json.JSONArray;
  import org.json.JSONException;
  import org.json.JSONObject;
+ 
  import java.util.Arrays;
  import java.util.HashMap;
  import java.util.List;
  import java.util.Map;
-
-public class AdobeMobilePlugin extends CordovaPlugin {
-
+ 
+ import com.adobe.marketing.mobile.LoggingMode;
+ import com.adobe.marketing.mobile.Messaging;
+ import com.adobe.marketing.mobile.Signal;
+ import com.adobe.marketing.mobile.UserProfile;
+ 
+ public class AdobeMobilePlugin extends CordovaPlugin {
+ 
+     @Override
+     protected void pluginInitialize() {
+         super.pluginInitialize();
+ 
+         MobileCore.setApplication(this.cordova.getActivity().getApplication());
+         MobileCore.setLogLevel(LoggingMode.DEBUG);
+     }
+ 
      @Override
      public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
-         if("configureWithAppID".equals(action)) {
+         if ("configureWithAppID".equals(action)) {
              try {
-
                  String applicationID = args.getString(0);
-                 if(applicationID == null || applicationID.isEmpty()) {
-                     callbackContext.error("You need to pass the application ID to the Adobe SDK initialization");
-                     return true;
-                 }
-
-                 MobileCore.configureWithAppID(applicationID);
-
                  List<Class<? extends Extension>> extensions = Arrays.asList(
+                         Messaging.EXTENSION,
                          Edge.EXTENSION,
+                         Assurance.EXTENSION,
                          Consent.EXTENSION,
+                         com.adobe.marketing.mobile.edge.identity.Identity.EXTENSION,
+                         com.adobe.marketing.mobile.Identity.EXTENSION,
+                         UserProfile.EXTENSION,
                          Lifecycle.EXTENSION,
-                         Identity.EXTENSION
+                         Signal.EXTENSION
                  );
-
+ 
                  MobileCore.registerExtensions(extensions, new AdobeCallbackWithError<Object>() {
                      @Override
                      public void fail(AdobeError adobeError) {
-                         callbackContext.success("Error to initialize "+adobeError.getErrorName());
+                         callbackContext.success("Error to initialize " + adobeError.getErrorName());
                      }
-
+ 
                      @Override
                      public void call(Object o) {
+                         MobileCore.configureWithAppID(applicationID);
                          callbackContext.success("Adobe SDK is initialized with success!");
                      }
                  });
@@ -68,7 +81,7 @@ public class AdobeMobilePlugin extends CordovaPlugin {
              }
              return true;
          }
-
+ 
          if ("getConsents".equals(action)) {
              getConsents(callbackContext);
              return true;
@@ -83,22 +96,43 @@ public class AdobeMobilePlugin extends CordovaPlugin {
              lifecyclePause(callbackContext);
              return true;
          }
-
+ 
          if ("updateConsents".equals(action)) {
              updateConsents(args, callbackContext);
              return true;
          }
  
+         if ("startSession".equals(action)) {
+             startAdobeSession(args, callbackContext);
+             return true;
+         }
+ 
          return false;
      }
-
+ 
+     private void startAdobeSession(JSONArray args, CallbackContext callbackContext) {
+         cordova.getThreadPool().execute(() -> {
+             try {
+                 String url = args.getString(0);
+                 if(url == null) {
+                     callbackContext.error("You need to pass the url session to the Adobe SDK");
+                 } else {
+                     Assurance.startSession(url);
+                     callbackContext.success();
+                 }
+             } catch (Exception ex) {
+                 callbackContext.error("You need to pass the application ID to the Adobe SDK initialization");
+             }
+         });
+     }
+ 
      private void getConsents(final CallbackContext callbackContext) {
          Consent.getConsents(new AdobeCallbackWithError<Map<String, Object>>() {
              @Override
              public void fail(AdobeError adobeError) {
-                 callbackContext.error("Error to get getConsents "+adobeError.getErrorName());
+                 callbackContext.error("Error to get getConsents " + adobeError.getErrorName());
              }
-
+ 
              @Override
              public void call(Map<String, Object> consents) {
                  JSONObject jsonObject = new JSONObject(consents);
@@ -106,7 +140,7 @@ public class AdobeMobilePlugin extends CordovaPlugin {
              }
          });
      }
-
+ 
      private void updateConsents(JSONArray args, CallbackContext callbackContext) {
          try {
              if (args == null || args.getString(0) == null) {
@@ -115,18 +149,18 @@ public class AdobeMobilePlugin extends CordovaPlugin {
                  Consent.getConsents(new AdobeCallbackWithError<Map<String, Object>>() {
                      @Override
                      public void fail(AdobeError adobeError) {
-                         callbackContext.error("Error to get update consents cause "+adobeError.getErrorName());
+                         callbackContext.error("Error to get update consents cause " + adobeError.getErrorName());
                      }
-
+ 
                      @Override
                      public void call(Map<String, Object> consents) {
                          if (consents.isEmpty()) {
                              callbackContext.error("Consents is empty, no updated!");
                          } else {
-
+ 
                              try {
                                  String value = args.getString(0);
-
+ 
                                  final Map<String, Object> collectConsents = new HashMap<>();
                                  collectConsents.put("collect", new HashMap<String, String>() {
                                      {
@@ -134,7 +168,7 @@ public class AdobeMobilePlugin extends CordovaPlugin {
                                      }
                                  });
                                  consents.put("consents", collectConsents);
-
+ 
                                  Consent.update(consents);
                                  callbackContext.success();
                              } catch (JSONException e) {
@@ -145,7 +179,7 @@ public class AdobeMobilePlugin extends CordovaPlugin {
                  });
              }
          } catch (Exception ex) {
-             callbackContext.error("Error to get update consents cause "+ex.getMessage());
+             callbackContext.error("Error to get update consents cause " + ex.getMessage());
          }
      }
  
