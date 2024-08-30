@@ -126,19 +126,17 @@
      }
  
      private void startAdobeSession(JSONArray args, CallbackContext callbackContext) {
-         cordova.getThreadPool().execute(() -> {
-             try {
-                 String url = args.getString(0);
-                 if(url == null) {
-                     callbackContext.error("You need to pass the url session to the Adobe SDK");
-                 } else {
-                     Assurance.startSession(url);
-                     callbackContext.success();
-                 }
-             } catch (Exception ex) {
-                 callbackContext.error("You need to pass the application ID to the Adobe SDK initialization");
+         try {
+             String url = args.getString(0);
+             if(args.getString(0).equals("null")) {
+                 callbackContext.error("You need to pass the url session to the Adobe SDK");
+             } else {
+                 Assurance.startSession(url);
+                 callbackContext.success();
              }
-         });
+         } catch (Exception ex) {
+             callbackContext.error("You need to pass the application ID to the Adobe SDK initialization");
+         }
      }
  
      private void getConsents(final CallbackContext callbackContext) {

@@ -8,15 +8,15 @@ exports.getConsents = function (success, error) {
     exec(success, error, 'AdobeMobilePlugin', 'getConsents');
 };
 
-exports.updateConsents = function (args, success, error) {
+exports.updateConsents = function (success, error, args) {
     exec(success, error, 'AdobeMobilePlugin', 'updateConsents', [args]);
 };
 
-exports.startSession = function (args, success, error) {
+exports.startSession = function (success, error, args) {
     exec(success, error, 'AdobeMobilePlugin', 'startSession', [args]);
 };
 
-exports.setPushIdentifier = function (args, success, error) {
+exports.setPushIdentifier = function (success, error, args) {
     exec(success, error, 'AdobeMobilePlugin', 'setPushIdentifier', [args]);
 };
 
