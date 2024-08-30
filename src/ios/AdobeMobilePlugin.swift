@@ -4,8 +4,17 @@ import AEPEdge
 import AEPEdgeConsent
 import AEPLifecycle
 import AEPEdgeIdentity
+import AEPEdgeIdentity
+import AEPAssurance
+import AEPLifecycle
+import AEPSignal
+import AEPServices
+import AEPIdentity
+import AEPUserProfile
 
-@objc(AdobeMobilePlugin) class AdobeMobilePlugin: CDVPlugin {
+
+@objc(AdobeMobilePlugin) 
+class AdobeMobilePlugin: CDVPlugin {
 
     @objc(configureWithAppID:)
     func configureWithAppID(command: CDVInvokedUrlCommand) {
@@ -16,12 +25,56 @@ import AEPEdgeIdentity
                 return
             }
             
-            MobileCore.configureWith(appId: applicationID)
-            
-            MobileCore.registerExtensions([Identity.self, Edge.self, Consent.self, Lifecycle.self], {
-                let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Adobe SDK is initialized with success!")
-                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            MobileCore.registerExtensions(
+                [
+                    Consent.self,
+                    Assurance.self,
+                    AEPEdgeIdentity.Identity.self,
+                    AEPIdentity.Identity.self,
+                    Identity.self,
+                    Edge.self,
+                    UserProfile.self,
+                    Lifecycle.self,
+                    Signal.self
+                ], {
+                    MobileCore.setLogLevel(.debug)
+                    MobileCore.configureWith(appId: applicationID)
+                
+                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Adobe SDK is initialized with success!")
+                    self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
             })
+        }
+    }
+    
+    @objc(setPushIdentifier:)
+    func setPushIdentifier(command: CDVInvokedUrlCommand) {
+        if((command.arguments[0] as? String) != nil) {
+            let deviceToken = command.arguments[0] as? String ?? ""
+            MobileCore.setPushIdentifier(deviceToken.data(using: String.Encoding.utf8))
+            
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+        } else {
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "You need to pass the token to use push registration")
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+        }
+    }
+    
+    @objc(startSession:)
+    func startSession(command: CDVInvokedUrlCommand) {
+        guard let sessionUrl = command.arguments[0] as? String else {
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "You need to pass the sessionUrl to startSession")
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            return
+        }
+        
+        if let sessionUrl = URL(string: sessionUrl) {
+            Assurance.startSession(url: sessionUrl)
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+        } else {
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Invalid session URL")
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         }
     }
 
@@ -41,6 +94,35 @@ import AEPEdgeIdentity
                 guard let jsonStr = String(data: jsonData, encoding: .utf8) else { return }
                 
                 let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: jsonStr)
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            }
+        }
+    }
+    
+    @objc(updateConsents:)
+    func updateConsents(command: CDVInvokedUrlCommand) {
+        DispatchQueue.global().async {
+            
+            let consentValue = command.arguments[0] as? String
+            guard let sessionUrl = command.arguments[0] as? String else {
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "You need to pass the consent value to update")
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+                return
+            }
+            
+            Consent.getConsents { consents, error in
+                guard error == nil, let consents = consents else {
+                
+                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Error to get getConsents \(error?.localizedDescription ?? "getConsents without data to return")")
+                    self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+                    return
+                }
+                
+                let collectConsent = ["collect": ["val": consentValue]]
+                let currentConsents = ["consents": collectConsent]
+                Consent.update(with: currentConsents)
+                
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Success to update consents")
                 self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
             }
         }

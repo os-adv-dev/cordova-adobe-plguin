@@ -66,9 +66,14 @@
                 <pod name="ACPAnalytics" spec=">= 2.2.3" />
                 <pod name="AEPAnalytics" spec=">= 2.2.3" />
                 <pod name="AEPEdge" spec=">= 2.2.3" />
+                <pod name="AEPLifecycle" spec=">= 5.0.0" />
                 <pod name="AEPEdgeConsent" spec=">= 5.0.0" />
                 <pod name="AEPEdgeIdentity" spec=">= 5.0.0" />
-                <pod name="AEPLifecycle" spec=">= 2.6.1" />
+                <pod name="AEPAssurance" spec=">= 5.0.0" />
+                <pod name="AEPIdentity" spec=">= 5.0.0" />
+                <pod name="AEPUserProfile" spec=">= 5.0.0" />
+                <pod name="AEPSignal" spec=">= 5.0.0" />
+                <pod name="AEPIdentity" spec=">= 5.0.0" />
             </pods>
         </podspec>
     </platform>
