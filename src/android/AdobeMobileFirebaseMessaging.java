@@ -19,8 +19,6 @@ import com.adobe.marketing.mobile.MessagingPushPayload;
 import com.adobe.marketing.mobile.MobileCore;
 import com.bumptech.glide.Glide;
 import com.google.firebase.messaging.RemoteMessage;
-import com.outsystems.experts.adobemobilesample.MainActivity;
-import com.outsystems.experts.adobemobilesample.R;
 import com.outsystems.plugins.firebasemessaging.controller.FirebaseMessagingReceiveService;
 
 import java.util.List;
