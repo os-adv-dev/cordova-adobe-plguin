@@ -27,3 +27,15 @@ exports.lifecycleStart = function (success, error) {
 exports.lifecyclePause = function (success, error) {
     exec(success, error, 'AdobeMobilePlugin', 'lifecyclePause');
 };
+
+exports.sendEvent = function (success, error, args) {
+    exec(success, error, 'AdobeMobilePlugin', 'sendEvent', [args]);
+};
+
+exports.updateIdentities = function (success, error, key, value, isPrimary) {
+    exec(success, error, 'AdobeMobilePlugin', 'updateIdentities', [key, value, isPrimary]);
+};
+
+exports.removeIdentities = function (success, error, key, value) {
+    exec(success, error, 'AdobeMobilePlugin', 'removeIdentities', [key, value]);
+};

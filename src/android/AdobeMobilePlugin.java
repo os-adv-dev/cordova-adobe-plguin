@@ -16,7 +16,9 @@
  import com.adobe.marketing.mobile.AdobeError;
  import com.adobe.marketing.mobile.Assurance;
  import com.adobe.marketing.mobile.Edge;
+ import com.adobe.marketing.mobile.ExperienceEvent;
  import com.adobe.marketing.mobile.Extension;
+ import com.adobe.marketing.mobile.Identity;
  import com.adobe.marketing.mobile.Lifecycle;
  import com.adobe.marketing.mobile.MobileCore;
  import com.adobe.marketing.mobile.edge.consent.Consent;
@@ -36,6 +38,9 @@
  import com.adobe.marketing.mobile.Messaging;
  import com.adobe.marketing.mobile.Signal;
  import com.adobe.marketing.mobile.UserProfile;
+ import com.adobe.marketing.mobile.edge.identity.AuthenticatedState;
+ import com.adobe.marketing.mobile.edge.identity.IdentityItem;
+ import com.adobe.marketing.mobile.edge.identity.IdentityMap;
  
  public class AdobeMobilePlugin extends CordovaPlugin {
  
@@ -57,6 +62,7 @@
                          Edge.EXTENSION,
                          Assurance.EXTENSION,
                          Consent.EXTENSION,
+                         Identity.EXTENSION,
                          com.adobe.marketing.mobile.edge.identity.Identity.EXTENSION,
                          com.adobe.marketing.mobile.Identity.EXTENSION,
                          UserProfile.EXTENSION,
@@ -66,10 +72,7 @@
  
                  MobileCore.registerExtensions(extensions, new AdobeCallbackWithError<Object>() {
                      @Override
-                     public void fail(AdobeError adobeError) {
-                         callbackContext.success("Error to initialize " + adobeError.getErrorName());
-                     }
- 
+                     public void fail(AdobeError adobeError) {callbackContext.success("Error to initialize " + adobeError.getErrorName());}
                      @Override
                      public void call(Object o) {
                          MobileCore.configureWithAppID(applicationID);
@@ -107,7 +110,7 @@
              return true;
          }
  
-         if("setPushIdentifier".equals(action)) {
+         if ("setPushIdentifier".equals(action)) {
              try {
                  String token = args.getString(0);
                  if (token == null) {
@@ -122,13 +125,77 @@
              return true;
          }
  
+         if ("sendEvent".equals(action)) {
+             sendEvent(args, callbackContext);
+             return true;
+         }
+ 
+         if ("updateIdentities".equals(action)) {
+             updateIdentities(args, callbackContext);
+             return true;
+         }
+ 
+         if ("removeIdentities".equals(action)) {
+             removeIdentities(args, callbackContext);
+             return true;
+         }
+ 
          return false;
+     }
+ 
+     private void updateIdentities(final JSONArray args, final CallbackContext callbackContext) {
+         try {
+ 
+             String identityKey = args.getString(0);
+             String identityValue = args.getString(1);
+             boolean isPrimary = args.getBoolean(2);
+ 
+             IdentityItem item = new IdentityItem(identityValue, AuthenticatedState.AMBIGUOUS, isPrimary);
+             IdentityMap identityMap = new IdentityMap();
+             identityMap.addItem(item, identityKey);
+ 
+             com.adobe.marketing.mobile.edge.identity.Identity.updateIdentities(identityMap);
+             callbackContext.success();
+         } catch (Exception ex) {
+             callbackContext.error("Error to updateIdentities error: "+ex.getMessage());
+         }
+     }
+ 
+     private void removeIdentities(final JSONArray args, final CallbackContext callbackContext) {
+         try {
+             String identityKey = args.getString(0);
+             String identityValue = args.getString(1);
+             IdentityItem item = new IdentityItem(identityValue);
+             com.adobe.marketing.mobile.edge.identity.Identity.removeIdentity(item, identityKey);
+             callbackContext.success();
+         } catch (Exception ex) {
+             callbackContext.error("Error to removeIdentities error: "+ex.getMessage());
+         }
+     }
+ 
+     private void sendEvent(final JSONArray args, final CallbackContext callbackContext) {
+         try {
+ 
+             String eventType = args.getString(0);
+             String value = args.getString(1);
+ 
+             Map<String, Object> xdmData = new HashMap<>();
+             xdmData.put(eventType, value);
+ 
+             ExperienceEvent experienceEvent = new ExperienceEvent.Builder()
+                     .setXdmSchema(xdmData)
+                     .build();
+ 
+             Edge.sendEvent(experienceEvent, list -> callbackContext.success());
+         } catch (Exception ex) {
+             callbackContext.error("eventType or eventValue is null, please review your implementation");
+         }
      }
  
      private void startAdobeSession(JSONArray args, CallbackContext callbackContext) {
          try {
              String url = args.getString(0);
-             if(args.getString(0).equals("null")) {
+             if (args.getString(0).equals("null")) {
                  callbackContext.error("You need to pass the url session to the Adobe SDK");
              } else {
                  Assurance.startSession(url);

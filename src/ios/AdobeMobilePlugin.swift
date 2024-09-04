@@ -15,7 +15,7 @@ import AEPUserProfile
 
 @objc(AdobeMobilePlugin) 
 class AdobeMobilePlugin: CDVPlugin {
-
+    
     @objc(configureWithAppID:)
     func configureWithAppID(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
@@ -39,10 +39,10 @@ class AdobeMobilePlugin: CDVPlugin {
                 ], {
                     MobileCore.setLogLevel(.debug)
                     MobileCore.configureWith(appId: applicationID)
-                
+                    
                     let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Adobe SDK is initialized with success!")
                     self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
-            })
+                })
         }
     }
     
@@ -77,14 +77,14 @@ class AdobeMobilePlugin: CDVPlugin {
             self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         }
     }
-
+    
     @objc(getConsents:)
     func getConsents(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
             Consent.getConsents { consents, error in
                 
                 guard error == nil, let consents = consents else {
-                
+                    
                     let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Error to get getConsents \(error?.localizedDescription ?? "getConsents without data to return")")
                     self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
                     return
@@ -101,33 +101,34 @@ class AdobeMobilePlugin: CDVPlugin {
     
     @objc(updateConsents:)
     func updateConsents(command: CDVInvokedUrlCommand) {
-        DispatchQueue.global().async {
-            
-            let consentValue = command.arguments[0] as? String
-            guard let sessionUrl = command.arguments[0] as? String else {
-                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "You need to pass the consent value to update")
+        guard let consentValue = command.arguments[0] as? String else {
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "The argument Opt-In/Opt-Out cannot be empty!")
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            return
+        }
+        
+        Consent.getConsents { consents, error in
+            guard error == nil, var currentConsents = consents else {
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Error getting consents: \(error?.localizedDescription ?? "getConsents without data to return")")
                 self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
                 return
             }
             
-            Consent.getConsents { consents, error in
-                guard error == nil, let consents = consents else {
-                
-                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Error to get getConsents \(error?.localizedDescription ?? "getConsents without data to return")")
-                    self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
-                    return
-                }
-                
+            if var consentsDict = currentConsents["consents"] as? [String: Any] {
+                consentsDict["collect"] = ["val": consentValue]
+                currentConsents["consents"] = consentsDict
+            } else {
                 let collectConsent = ["collect": ["val": consentValue]]
-                let currentConsents = ["consents": collectConsent]
-                Consent.update(with: currentConsents)
-                
-                let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Success to update consents")
-                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+                currentConsents["consents"] = collectConsent
             }
+            
+            Consent.update(with: currentConsents)
+            
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Success to update consents")
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         }
     }
-
+    
     @objc(lifecycleStart:)
     func lifecycleStart(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
@@ -136,12 +137,20 @@ class AdobeMobilePlugin: CDVPlugin {
             self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         }
     }
-
+    
     @objc(lifecyclePause:)
     func lifecyclePause(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
             MobileCore.lifecyclePause()
             let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Success lifecyclePause")
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+        }
+    }
+    
+    @objc(sendEvent:)
+    func sendEvent(command: CDVInvokedUrlCommand) {
+        DispatchQueue.global().async {
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Success lifecycleStart")
             self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         }
     }
