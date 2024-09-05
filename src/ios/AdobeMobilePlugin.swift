@@ -1,21 +1,20 @@
 import Foundation
 import AEPCore
 import AEPEdge
-import AEPEdgeConsent
-import AEPLifecycle
-import AEPEdgeIdentity
-import AEPEdgeIdentity
 import AEPAssurance
+import AEPEdgeConsent
+import AEPEdgeIdentity
+import AEPUserProfile
+import AEPIdentity
 import AEPLifecycle
 import AEPSignal
 import AEPServices
-import AEPIdentity
-import AEPUserProfile
+import AEPMessaging
 
 
 @objc(AdobeMobilePlugin) 
 class AdobeMobilePlugin: CDVPlugin {
-    
+
     @objc(configureWithAppID:)
     func configureWithAppID(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
@@ -27,22 +26,22 @@ class AdobeMobilePlugin: CDVPlugin {
             
             MobileCore.registerExtensions(
                 [
-                    Consent.self,
+                    Messaging.self,
+                    Edge.self,
                     Assurance.self,
+                    Consent.self,
                     AEPEdgeIdentity.Identity.self,
                     AEPIdentity.Identity.self,
-                    Identity.self,
-                    Edge.self,
                     UserProfile.self,
                     Lifecycle.self,
                     Signal.self
                 ], {
                     MobileCore.setLogLevel(.debug)
                     MobileCore.configureWith(appId: applicationID)
-                    
+                
                     let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Adobe SDK is initialized with success!")
                     self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
-                })
+            })
         }
     }
     
@@ -50,7 +49,7 @@ class AdobeMobilePlugin: CDVPlugin {
     func setPushIdentifier(command: CDVInvokedUrlCommand) {
         if((command.arguments[0] as? String) != nil) {
             let deviceToken = command.arguments[0] as? String ?? ""
-            MobileCore.setPushIdentifier(deviceToken.data(using: String.Encoding.utf8))
+            MobileCore.setPushIdentifier(deviceToken.data(using: .utf8))
             
             let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
             self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
@@ -77,14 +76,14 @@ class AdobeMobilePlugin: CDVPlugin {
             self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         }
     }
-    
+
     @objc(getConsents:)
     func getConsents(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
             Consent.getConsents { consents, error in
                 
                 guard error == nil, let consents = consents else {
-                    
+                
                     let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Error to get getConsents \(error?.localizedDescription ?? "getConsents without data to return")")
                     self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
                     return
@@ -101,34 +100,33 @@ class AdobeMobilePlugin: CDVPlugin {
     
     @objc(updateConsents:)
     func updateConsents(command: CDVInvokedUrlCommand) {
-        guard let consentValue = command.arguments[0] as? String else {
-            let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "The argument Opt-In/Opt-Out cannot be empty!")
-            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
-            return
-        }
-        
-        Consent.getConsents { consents, error in
-            guard error == nil, var currentConsents = consents else {
-                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Error getting consents: \(error?.localizedDescription ?? "getConsents without data to return")")
+        DispatchQueue.global().async {
+            
+            let consentValue = command.arguments[0] as? String
+            guard let sessionUrl = command.arguments[0] as? String else {
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "You need to pass the consent value to update")
                 self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
                 return
             }
             
-            if var consentsDict = currentConsents["consents"] as? [String: Any] {
-                consentsDict["collect"] = ["val": consentValue]
-                currentConsents["consents"] = consentsDict
-            } else {
+            Consent.getConsents { consents, error in
+                guard error == nil, let consents = consents else {
+                
+                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Error to get getConsents \(error?.localizedDescription ?? "getConsents without data to return")")
+                    self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+                    return
+                }
+                
                 let collectConsent = ["collect": ["val": consentValue]]
-                currentConsents["consents"] = collectConsent
+                let currentConsents = ["consents": collectConsent]
+                Consent.update(with: currentConsents)
+                
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Success to update consents")
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
             }
-            
-            Consent.update(with: currentConsents)
-            
-            let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Success to update consents")
-            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         }
     }
-    
+
     @objc(lifecycleStart:)
     func lifecycleStart(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
@@ -137,7 +135,7 @@ class AdobeMobilePlugin: CDVPlugin {
             self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         }
     }
-    
+
     @objc(lifecyclePause:)
     func lifecyclePause(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
@@ -150,8 +148,77 @@ class AdobeMobilePlugin: CDVPlugin {
     @objc(sendEvent:)
     func sendEvent(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
-            let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Success lifecycleStart")
-            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            do {
+                guard let args = command.arguments as? [String], args.count >= 2 else {
+                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "eventType or eventValue is null, please review your implementation")
+                    self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+                    return
+                }
+
+                let eventType = args[0]
+                let eventValue = args[1]
+                let xdmData: [String: Any] = [eventType: eventValue]
+
+                let experienceEvent = ExperienceEvent(xdm: xdmData)
+                Edge.sendEvent(experienceEvent: experienceEvent) { _ in
+                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
+                    self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+                }
+            } catch {
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "eventType or eventValue is null, please review your implementation")
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            }
+        }
+    }
+    
+    @objc(updateIdentities:)
+    func updateIdentities(command: CDVInvokedUrlCommand) {
+        DispatchQueue.global().async {
+            do {
+                guard let args = command.arguments as? [Any], args.count >= 3,
+                      let identityKey = args[0] as? String,
+                      let identityValue = args[1] as? String,
+                      let isPrimary = args[2] as? Bool else {
+                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Invalid arguments for updateIdentities")
+                    self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+                    return
+                }
+
+                let identityItem = IdentityItem(id: identityValue, authenticatedState: .ambiguous, primary: isPrimary)
+                var identityMap = IdentityMap()
+                identityMap.add(item: identityItem, withNamespace: identityKey)
+
+                Identity.updateIdentities(with: identityMap)
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            } catch {
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Error updating identities: \(error.localizedDescription)")
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            }
+        }
+    }
+    
+    @objc(removeIdentity:)
+    func removeIdentity(command: CDVInvokedUrlCommand) {
+        DispatchQueue.global().async {
+            do {
+                guard let args = command.arguments as? [Any], args.count >= 2,
+                      let identityKey = args[0] as? String,
+                      let identityValue = args[1] as? String else {
+                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Invalid arguments for removeIdentity")
+                    self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+                    return
+                }
+
+                let identityItem = IdentityItem(id: identityValue)
+                Identity.removeIdentity(item: identityItem, withNamespace: identityKey)
+                
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            } catch {
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Error removing identity: \(error.localizedDescription)")
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            }
         }
     }
 }

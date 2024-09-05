@@ -76,6 +76,7 @@
                 <pod name="AEPUserProfile" spec=">= 5.0.0" />
                 <pod name="AEPSignal" spec=">= 5.0.0" />
                 <pod name="AEPIdentity" spec=">= 5.0.0" />
+                <pod name="AEPMessaging" spec=">= 5.0.0" />
             </pods>
         </podspec>
     </platform>
