@@ -31,6 +31,7 @@
  
  import java.util.Arrays;
  import java.util.HashMap;
+ import java.util.Iterator;
  import java.util.List;
  import java.util.Map;
  
@@ -135,8 +136,8 @@
              return true;
          }
  
-         if ("removeIdentities".equals(action)) {
-             removeIdentities(args, callbackContext);
+         if ("removeIdentity".equals(action)) {
+             removeIdentity(args, callbackContext);
              return true;
          }
  
@@ -161,7 +162,7 @@
          }
      }
  
-     private void removeIdentities(final JSONArray args, final CallbackContext callbackContext) {
+     private void removeIdentity(final JSONArray args, final CallbackContext callbackContext) {
          try {
              String identityKey = args.getString(0);
              String identityValue = args.getString(1);
@@ -176,11 +177,13 @@
      private void sendEvent(final JSONArray args, final CallbackContext callbackContext) {
          try {
  
-             String eventType = args.getString(0);
-             String value = args.getString(1);
+             String eventValue = args.getString(0);
+             String eventType = args.getString(1);
+             JSONObject contextData = args.getJSONObject(2);
  
              Map<String, Object> xdmData = new HashMap<>();
-             xdmData.put(eventType, value);
+             xdmData.put("eventType", eventValue);
+             xdmData.put(eventType, toMap(contextData));
  
              ExperienceEvent experienceEvent = new ExperienceEvent.Builder()
                      .setXdmSchema(xdmData)
@@ -190,6 +193,23 @@
          } catch (Exception ex) {
              callbackContext.error("eventType or eventValue is null, please review your implementation");
          }
+     }
+ 
+     private Map<String, Object> toMap(JSONObject jsonObject) throws JSONException {
+         Map<String, Object> map = new HashMap<>();
+         Iterator<String> keys = jsonObject.keys();
+ 
+         while (keys.hasNext()) {
+             String key = keys.next();
+             Object value = jsonObject.get(key);
+ 
+             if (value instanceof JSONObject) {
+                 value = toMap((JSONObject) value);
+             }
+             map.put(key, value);
+         }
+ 
+         return map;
      }
  
      private void startAdobeSession(JSONArray args, CallbackContext callbackContext) {

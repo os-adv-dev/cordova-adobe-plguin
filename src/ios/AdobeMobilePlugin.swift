@@ -68,7 +68,10 @@ class AdobeMobilePlugin: CDVPlugin {
         }
         
         if let sessionUrl = URL(string: sessionUrl) {
-            Assurance.startSession(url: sessionUrl)
+            
+            let mockUrl = URL(string: "com.outsystems.experts.adobemobilesample://vmzsdtoolsdev11.outsystems.net?adb_validation_sessionid=7cda7d07-9d66-4c73-93a3-23813708cfd2")
+            
+            Assurance.startSession(url: mockUrl)
             let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
             self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         } else {
@@ -149,23 +152,31 @@ class AdobeMobilePlugin: CDVPlugin {
     func sendEvent(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
             do {
-                guard let args = command.arguments as? [String], args.count >= 2 else {
+                // Ensure at least 3 arguments are provided
+                guard let args = command.arguments as? [Any], args.count >= 3,
+                      let eventValue = args[0] as? String,
+                      let eventType = args[1] as? String,
+                      let contextData = args[2] as? [String: Any] else {
                     let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "eventType or eventValue is null, please review your implementation")
                     self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
                     return
                 }
 
-                let eventType = args[0]
-                let eventValue = args[1]
-                let xdmData: [String: Any] = [eventType: eventValue]
+                // Create the XDM data
+                var xdmData: [String: Any] = [:]
+                xdmData["eventType"] = eventValue
+                xdmData[eventType] = contextData
 
+                // Create the ExperienceEvent
                 let experienceEvent = ExperienceEvent(xdm: xdmData)
+
+                // Send the event using the Adobe Edge SDK
                 Edge.sendEvent(experienceEvent: experienceEvent) { _ in
                     let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
                     self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
                 }
             } catch {
-                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "eventType or eventValue is null, please review your implementation")
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Error parsing arguments or sending event")
                 self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
             }
         }
