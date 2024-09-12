@@ -34,6 +34,7 @@
  import java.util.Iterator;
  import java.util.List;
  import java.util.Map;
+ import com.google.gson.Gson;
  
  import com.adobe.marketing.mobile.LoggingMode;
  import com.adobe.marketing.mobile.Messaging;
