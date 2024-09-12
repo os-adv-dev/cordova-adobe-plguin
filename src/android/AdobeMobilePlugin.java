@@ -235,8 +235,9 @@
  
              @Override
              public void call(Map<String, Object> consents) {
-                 JSONObject jsonObject = new JSONObject(consents);
-                 callbackContext.success(jsonObject);
+                Gson gson = new Gson();
+                String json = gson.toJson(consents);
+                callbackContext.success(json);
              }
          });
      }

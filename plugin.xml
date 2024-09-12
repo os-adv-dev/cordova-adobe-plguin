@@ -40,6 +40,7 @@
         <source-file src="src/android/AdobeMobilePlugin.java" target-dir="src/com/adobe/marketing/mobile/cordova" />
         <source-file src="src/android/AdobeMobileFirebaseMessaging.java" target-dir="src/com/adobe/marketing/mobile/cordova" />
         <source-file src="src/android/AppConstants.java" target-dir="src/com/adobe/marketing/mobile/cordova" />
+        <source-file src="src/android/NotificationDismissedReceiver.java" target-dir="src/com/adobe/marketing/mobile/cordova" />
         <!-- dependencies managed through included gradle file -->
         <framework custom="true" src="src/android/adobe-extension.gradle" type="gradleReference" />
         <framework custom="true" src="src/android/build-extras.gradle" type="gradleReference" />
