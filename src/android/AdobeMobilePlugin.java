@@ -114,8 +114,9 @@
 
          if ("updateConfigurationWith".equals(action)) {
             // Do nothing for Android do not need
+            callbackContext.success();
             return true;
-        }
+         }
  
          if ("setPushIdentifier".equals(action)) {
              try {

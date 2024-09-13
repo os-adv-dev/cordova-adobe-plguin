@@ -47,15 +47,25 @@ class AdobeMobilePlugin: CDVPlugin {
 
     @objc(updateConfigurationWith:)
     func updateConfigurationWith(command: CDVInvokedUrlCommand) {
-        let messagingSandbox = command.arguments[0] as? Bool ?? false
-        MobileCore.updateConfigurationWith(configDict: ["messaging.useSandbox": messagingSandbox])
+        do {
+            let messagingSandbox = command.arguments[0] as? Bool ?? false
+            MobileCore.updateConfigurationWith(configDict: ["messaging.useSandbox": messagingSandbox])
+            
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            
+        } catch let error {
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: error.localizedDescription)
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+        }
     }
     
     @objc(setPushIdentifier:)
     func setPushIdentifier(command: CDVInvokedUrlCommand) {
         if((command.arguments[0] as? String) != nil) {
             let deviceToken = command.arguments[0] as? String ?? ""
-            MobileCore.setPushIdentifier(deviceToken.data(using: .utf8))
+            // We are sending this value in didRegisterForRemoteNotificationsWithDeviceToken in AppDelegate
+            // MobileCore.setPushIdentifier(deviceToken.data(using: .utf8))
             
             let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
             self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
