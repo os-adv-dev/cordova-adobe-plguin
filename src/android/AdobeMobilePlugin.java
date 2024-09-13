@@ -146,22 +146,24 @@
      }
  
      private void updateIdentities(final JSONArray args, final CallbackContext callbackContext) {
-         try {
- 
-             String identityKey = args.getString(0);
-             String identityValue = args.getString(1);
-             boolean isPrimary = args.getBoolean(2);
- 
-             IdentityItem item = new IdentityItem(identityValue, AuthenticatedState.AMBIGUOUS, isPrimary);
-             IdentityMap identityMap = new IdentityMap();
-             identityMap.addItem(item, identityKey);
- 
-             com.adobe.marketing.mobile.edge.identity.Identity.updateIdentities(identityMap);
-             callbackContext.success();
-         } catch (Exception ex) {
-             callbackContext.error("Error to updateIdentities error: "+ex.getMessage());
-         }
-     }
+        try {
+
+            String identityKey = args.getString(0);
+            String identityValue = args.getString(1);
+            String authenticatedState = args.getString(2);
+            boolean isPrimary = args.getBoolean(3);
+            AuthenticatedState state = AuthenticatedState.valueOf(authenticatedState);
+
+            IdentityItem item = new IdentityItem(identityValue, state, isPrimary);
+            IdentityMap identityMap = new IdentityMap();
+            identityMap.addItem(item, identityKey);
+
+            com.adobe.marketing.mobile.edge.identity.Identity.updateIdentities(identityMap);
+            callbackContext.success();
+        } catch (Exception ex) {
+            callbackContext.error("Error to updateIdentities error: "+ex.getMessage());
+        }
+    }
  
      private void removeIdentity(final JSONArray args, final CallbackContext callbackContext) {
          try {

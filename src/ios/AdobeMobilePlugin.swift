@@ -68,10 +68,7 @@ class AdobeMobilePlugin: CDVPlugin {
         }
         
         if let sessionUrl = URL(string: sessionUrl) {
-            
-            let mockUrl = URL(string: "com.outsystems.experts.adobemobilesample://vmzsdtoolsdev11.outsystems.net?adb_validation_sessionid=7cda7d07-9d66-4c73-93a3-23813708cfd2")
-            
-            Assurance.startSession(url: mockUrl)
+            Assurance.startSession(url: sessionUrl)
             let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
             self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
         } else {
@@ -189,13 +186,15 @@ class AdobeMobilePlugin: CDVPlugin {
                 guard let args = command.arguments as? [Any], args.count >= 3,
                       let identityKey = args[0] as? String,
                       let identityValue = args[1] as? String,
-                      let isPrimary = args[2] as? Bool else {
+                      let authenticatedState = args[2] as? String,
+                      let isPrimary = args[3] as? Bool else {
                     let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Invalid arguments for updateIdentities")
                     self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
                     return
                 }
 
-                let identityItem = IdentityItem(id: identityValue, authenticatedState: .ambiguous, primary: isPrimary)
+                let authenticationValue = AuthenticatedState(rawValue: authenticatedState) ?? .ambiguous
+                let identityItem = IdentityItem(id: identityValue, authenticatedState: authenticationValue, primary: isPrimary)
                 var identityMap = IdentityMap()
                 identityMap.add(item: identityItem, withNamespace: identityKey)
 

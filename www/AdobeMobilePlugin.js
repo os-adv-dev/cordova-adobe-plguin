@@ -32,8 +32,8 @@ exports.sendEvent = function (success, error, eventName, eventType, contextData)
     exec(success, error, 'AdobeMobilePlugin', 'sendEvent', [eventName, eventType, contextData]);
 };
 
-exports.updateIdentities = function (success, error, key, value, isPrimary) {
-    exec(success, error, 'AdobeMobilePlugin', 'updateIdentities', [key, value, isPrimary]);
+exports.updateIdentities = function (success, error, key, value, authenticationType, isPrimary) {
+    exec(success, error, 'AdobeMobilePlugin', 'updateIdentities', [key, value, authenticationType, isPrimary]);
 };
 
 exports.removeIdentity = function (success, error, key, value) {
