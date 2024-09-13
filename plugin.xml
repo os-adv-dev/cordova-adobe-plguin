@@ -34,6 +34,7 @@
                     <action android:name="com.google.firebase.MESSAGING_EVENT" />
                 </intent-filter>
             </service>
+            <receiver android:name="com.adobe.marketing.mobile.cordova.NotificationDismissedReceiver"/>
         </config-file>
 
         <!-- plugin source -->
@@ -44,6 +45,8 @@
         <!-- dependencies managed through included gradle file -->
         <framework custom="true" src="src/android/adobe-extension.gradle" type="gradleReference" />
         <framework custom="true" src="src/android/build-extras.gradle" type="gradleReference" />
+
+        <hook type="after_plugin_add" src="hooks/add_on_new_intent.js"/>
     </platform>
 
     <!-- configure ios platform -->
