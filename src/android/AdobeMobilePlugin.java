@@ -111,6 +111,11 @@
              startAdobeSession(args, callbackContext);
              return true;
          }
+
+         if ("updateConfigurationWith".equals(action)) {
+            // Do nothing for Android do not need
+            return true;
+        }
  
          if ("setPushIdentifier".equals(action)) {
              try {

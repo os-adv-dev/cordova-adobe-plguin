@@ -44,6 +44,12 @@ class AdobeMobilePlugin: CDVPlugin {
             })
         }
     }
+
+    @objc(updateConfigurationWith:)
+    func updateConfigurationWith(command: CDVInvokedUrlCommand) {
+        let messagingSandbox = command.arguments[0] as? Bool ?? false
+        MobileCore.updateConfigurationWith(configDict: ["messaging.useSandbox": messagingSandbox])
+    }
     
     @objc(setPushIdentifier:)
     func setPushIdentifier(command: CDVInvokedUrlCommand) {

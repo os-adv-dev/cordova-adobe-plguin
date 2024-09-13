@@ -39,3 +39,7 @@ exports.updateIdentities = function (success, error, key, value, authenticationT
 exports.removeIdentity = function (success, error, key, value) {
     exec(success, error, 'AdobeMobilePlugin', 'removeIdentity', [key, value]);
 };
+
+exports.updateConfigurationWith = function (success, error, args) {
+    exec(success, error, 'AdobeMobilePlugin', 'updateConfigurationWith', [args]);
+};
