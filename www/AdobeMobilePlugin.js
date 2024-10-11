@@ -97,12 +97,11 @@ exports.lifecyclePause = function (success, error) {
  *   function(err) { console.error('Error sending event:', err); },
  *   'eventNameExample', 
  *   'eventTypeExample', 
- *   { key1: 'value1', key2: 'value2' }, 
  *   { accountID: '123456', personId: '654321' }
  * );
  */
-exports.sendEvent = function (success, error, eventName, eventType, contextData, financeData) {
-    exec(success, error, 'AdobeMobilePlugin', 'sendEvent', [eventName, eventType, contextData, financeData]);
+exports.sendEvent = function (success, error, eventName, eventType, eventData) {
+    exec(success, error, 'AdobeMobilePlugin', 'sendEvent', [eventName, eventType, eventData]);
 };
 
 /**

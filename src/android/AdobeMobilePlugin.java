@@ -186,26 +186,35 @@
      private void sendEvent(final JSONArray args, final CallbackContext callbackContext) {
         try {
 
-            String eventValue = args.getString(0);
+            String eventName = args.getString(0);
             String eventType = args.getString(1);
-            JSONObject contextData = args.getJSONObject(2);
-            JSONObject financeData = args.getJSONObject(3);
+            JSONObject eventData = args.getJSONObject(2);
 
             Map<String, Object> xdmData = new HashMap<>();
-            xdmData.put("eventType", eventValue);
-            xdmData.put(eventType, toMap(contextData));
+            xdmData.put("eventType", eventType);
+
+            Map<String, Object> pageViewsData = new HashMap<>();
+            pageViewsData.put("value", 1);
+
+            Map<String, Object> webPageDetailsData = new HashMap<>();
+            webPageDetailsData.put("name", eventName);
+            webPageDetailsData.put("pageViews", pageViewsData);
+
+            Map<String, Object> webData = new HashMap<>();
+            webData.put("webPageDetails", webPageDetailsData);
+            xdmData.put("web", webData);
 
             Map<String, Object> paragonFinanceData = new HashMap<>();
 
-            if (financeData.has("accountID")) {
+            if (eventData.has("accountID")) {
                 Map<String, Object> customerActivityData = new HashMap<>();
-                customerActivityData.put("accountID", financeData.getString("accountID"));
+                customerActivityData.put("accountID", eventData.getString("accountID"));
                 paragonFinanceData.put("customerActivity", customerActivityData);
             }
 
-            if (financeData.has("personId")) {
+            if (eventData.has("personId")) {
                 Map<String, Object> identitiesData = new HashMap<>();
-                identitiesData.put("personId", financeData.getString("personId"));
+                identitiesData.put("personId", eventData.getString("personId"));
                 paragonFinanceData.put("identities", identitiesData);
             }
 

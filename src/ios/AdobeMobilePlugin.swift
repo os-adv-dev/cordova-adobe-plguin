@@ -165,19 +165,30 @@ class AdobeMobilePlugin: CDVPlugin {
     func sendEvent(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
             do {
-                guard let args = command.arguments as? [Any], args.count >= 4,
-                      let eventValue = args[0] as? String,
+                
+                guard let args = command.arguments as? [Any], args.count >= 3,
+                      let eventName = args[0] as? String,
                       let eventType = args[1] as? String,
-                      let contextData = args[2] as? [String: Any],
-                      let financeData = args[3] as? [String: Any] else {
-                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "eventType or eventValue is null, please review your implementation")
+                      let financeData = args[2] as? [String: Any] else {
+                    let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "eventType or eventName is null, please review your implementation")
                     self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
                     return
                 }
 
                 var xdmData: [String: Any] = [:]
-                xdmData["eventType"] = eventValue
-                xdmData[eventType] = contextData
+                xdmData["eventType"] = eventType
+
+                var pageViewsData: [String: Any] = [:]
+                pageViewsData["value"] = 1
+
+                var webPageDetailsData: [String: Any] = [:]
+                webPageDetailsData["name"] = eventName
+                webPageDetailsData["pageViews"] = pageViewsData
+
+                var webData: [String: Any] = [:]
+                webData["webPageDetails"] = webPageDetailsData
+
+                xdmData["web"] = webData
 
                 var paragonFinanceData: [String: Any] = [:]
 
