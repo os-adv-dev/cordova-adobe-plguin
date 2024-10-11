@@ -158,7 +158,7 @@
             String identityValue = args.getString(1);
             String authenticatedState = args.getString(2);
             boolean isPrimary = args.getBoolean(3);
-            AuthenticatedState state = AuthenticatedState.valueOf(authenticatedState);
+            AuthenticatedState state = AuthenticatedState.fromString(authenticatedState);
 
             IdentityItem item = new IdentityItem(identityValue, state, isPrimary);
             IdentityMap identityMap = new IdentityMap();
