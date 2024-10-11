@@ -184,25 +184,44 @@
      }
  
      private void sendEvent(final JSONArray args, final CallbackContext callbackContext) {
-         try {
- 
-             String eventValue = args.getString(0);
-             String eventType = args.getString(1);
-             JSONObject contextData = args.getJSONObject(2);
- 
-             Map<String, Object> xdmData = new HashMap<>();
-             xdmData.put("eventType", eventValue);
-             xdmData.put(eventType, toMap(contextData));
- 
-             ExperienceEvent experienceEvent = new ExperienceEvent.Builder()
-                     .setXdmSchema(xdmData)
-                     .build();
- 
-             Edge.sendEvent(experienceEvent, list -> callbackContext.success());
-         } catch (Exception ex) {
-             callbackContext.error("eventType or eventValue is null, please review your implementation");
-         }
-     }
+        try {
+
+            String eventValue = args.getString(0);
+            String eventType = args.getString(1);
+            JSONObject contextData = args.getJSONObject(2);
+            JSONObject financeData = args.getJSONObject(3);
+
+            Map<String, Object> xdmData = new HashMap<>();
+            xdmData.put("eventType", eventValue);
+            xdmData.put(eventType, toMap(contextData));
+
+            Map<String, Object> paragonFinanceData = new HashMap<>();
+
+            if (financeData.has("accountID")) {
+                Map<String, Object> customerActivityData = new HashMap<>();
+                customerActivityData.put("accountID", financeData.getString("accountID"));
+                paragonFinanceData.put("customerActivity", customerActivityData);
+            }
+
+            if (financeData.has("personId")) {
+                Map<String, Object> identitiesData = new HashMap<>();
+                identitiesData.put("personId", financeData.getString("personId"));
+                paragonFinanceData.put("identities", identitiesData);
+            }
+
+            if (!paragonFinanceData.isEmpty()) {
+                xdmData.put("_paragonfinance", paragonFinanceData);
+            }
+
+            ExperienceEvent experienceEvent = new ExperienceEvent.Builder()
+                    .setXdmSchema(xdmData)
+                    .build();
+
+            Edge.sendEvent(experienceEvent, list -> callbackContext.success());
+        } catch (Exception ex) {
+            callbackContext.error("eventType or eventValue is null, please review your implementation");
+        }
+    }
  
      private Map<String, Object> toMap(JSONObject jsonObject) throws JSONException {
          Map<String, Object> map = new HashMap<>();

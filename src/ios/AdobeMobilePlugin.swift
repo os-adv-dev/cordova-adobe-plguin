@@ -165,25 +165,40 @@ class AdobeMobilePlugin: CDVPlugin {
     func sendEvent(command: CDVInvokedUrlCommand) {
         DispatchQueue.global().async {
             do {
-                // Ensure at least 3 arguments are provided
-                guard let args = command.arguments as? [Any], args.count >= 3,
+                guard let args = command.arguments as? [Any], args.count >= 4,
                       let eventValue = args[0] as? String,
                       let eventType = args[1] as? String,
-                      let contextData = args[2] as? [String: Any] else {
+                      let contextData = args[2] as? [String: Any],
+                      let financeData = args[3] as? [String: Any] else {
                     let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "eventType or eventValue is null, please review your implementation")
                     self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
                     return
                 }
 
-                // Create the XDM data
                 var xdmData: [String: Any] = [:]
                 xdmData["eventType"] = eventValue
                 xdmData[eventType] = contextData
 
-                // Create the ExperienceEvent
+                var paragonFinanceData: [String: Any] = [:]
+
+                if let accountID = financeData["accountID"] as? String {
+                    var customerActivityData: [String: Any] = [:]
+                    customerActivityData["accountID"] = accountID
+                    paragonFinanceData["customerActivity"] = customerActivityData
+                }
+
+                if let personId = financeData["personId"] as? String {
+                    var identitiesData: [String: Any] = [:]
+                    identitiesData["personId"] = personId
+                    paragonFinanceData["identities"] = identitiesData
+                }
+
+                if !paragonFinanceData.isEmpty {
+                    xdmData["_paragonfinance"] = paragonFinanceData
+                }
+
                 let experienceEvent = ExperienceEvent(xdm: xdmData)
 
-                // Send the event using the Adobe Edge SDK
                 Edge.sendEvent(experienceEvent: experienceEvent) { _ in
                     let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
                     self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
