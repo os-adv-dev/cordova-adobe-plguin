@@ -74,8 +74,7 @@
             <pods use-frameworks="true">
                 <pod name="ACPAnalytics" spec=">= 2.2.3" />
                 <pod name="AEPAnalytics" spec=">= 2.2.3" />
-                <pod name="AEPEdge" spec=">= 5.0.2" />
-                <!--<pod name="AEPEdge" spec=">= 2.2.3" />-->
+                <pod name="AEPEdge" spec=">= 2.2.3" />
                 <pod name="AEPLifecycle" spec=">= 5.0.0" />
                 <pod name="AEPEdgeConsent" spec=">= 5.0.0" />
                 <pod name="AEPEdgeIdentity" spec=">= 5.0.0" />
