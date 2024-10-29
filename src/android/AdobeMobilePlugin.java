@@ -147,6 +147,11 @@
              removeIdentity(args, callbackContext);
              return true;
          }
+
+         if ("resetIdentities".equals(action)) {
+            resetIdentities(args, callbackContext);
+            return true;
+        }
  
          return false;
      }
@@ -340,4 +345,15 @@
              }
          });
      }
+
+     private void resetIdentities(final CallbackContext callbackContext) {
+        cordova.getThreadPool().execute(() -> {
+            try {
+                MobileCore.resetIdentities();
+                callbackContext.success();
+            } catch (Exception ex) {
+                callbackContext.error(ex.getMessage());
+            }
+        });
+    }
  }

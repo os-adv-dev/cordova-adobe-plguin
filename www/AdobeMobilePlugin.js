@@ -75,6 +75,20 @@ exports.lifecyclePause = function (success, error) {
 };
 
 /**
+ * Resets the user identities in the AdobeMobilePlugin.
+ *
+ * This method clears all identities that have been previously set in the Adobe Mobile SDK, allowing you 
+ * to start fresh or reset the user’s identity information. This can be useful for privacy compliance or 
+ * re-authentication scenarios.
+ *
+ * @param {Function} success - A callback function that is executed when the identities are successfully reset.
+ * @param {Function} error - A callback function that is executed if there is an error resetting the identities.
+ */
+exports.resetIdentities = function (success, error) {
+    exec(success, error, 'AdobeMobilePlugin', 'resetIdentities');
+};
+
+/**
  * Sends an event to the AdobeMobilePlugin.
  *
  * @param {Function} success - A callback function that is executed when the event is successfully sent.

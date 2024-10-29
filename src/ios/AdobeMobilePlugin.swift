@@ -273,4 +273,13 @@ class AdobeMobilePlugin: CDVPlugin {
             }
         }
     }
+
+    @objc(resetIdentities:)
+    func resetIdentities(command: CDVInvokedUrlCommand) {
+        DispatchQueue.global().async {
+            MobileCore.resetIdentities()
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Success resetIdentities")
+            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+        }
+    }
 }
