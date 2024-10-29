@@ -138,7 +138,7 @@ package com.adobe.marketing.mobile.cordova;
          }
 
          if ("resetIdentities".equals(action)) {
-            resetIdentities(args, callbackContext);
+            resetIdentities(callbackContext);
             return true;
         }
  
