@@ -340,8 +340,8 @@ public class AdobeMobilePlugin extends CordovaPlugin {
             try {
                 MobileCore.setPrivacyStatus(MobilePrivacyStatus.OPT_OUT);
                 MobileCore.resetIdentities();
-                com.adobe.marketing.mobile.Identity.getExperienceCloudId(s -> {});
-                MobileCore.setPrivacyStatus(MobilePrivacyStatus.OPT_IN);
+                //com.adobe.marketing.mobile.Identity.getExperienceCloudId(s -> {});
+                //MobileCore.setPrivacyStatus(MobilePrivacyStatus.OPT_IN);
                 callbackContext.success();
             } catch (Exception ex) {
                 callbackContext.error(ex.getMessage());
