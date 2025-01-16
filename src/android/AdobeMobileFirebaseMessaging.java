@@ -10,7 +10,6 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -131,7 +130,7 @@ public class AdobeMobileFirebaseMessaging extends FirebaseMessagingReceiveServic
             Log.v(TAG, " --- Push Message Id: " + messageId);
             notificationManager.notify(notificationId, notificationBuilder.build());
         } catch (Exception exception) {
-            Toast.makeText(getApplicationContext(), "Error to display Adobe Push notification: "+exception.getMessage(), Toast.LENGTH_SHORT).show();
+             Log.d("AdobeMobileFirebaseMessaging", "Error to display Adobe Push notification: "+exception.getMessage());
         }
     }
 
