@@ -64,7 +64,9 @@ public class AdobeMobilePlugin extends CordovaPlugin {
 
                 MobileCore.registerExtensions(extensions, new AdobeCallbackWithError<Object>() {
                     @Override
-                    public void fail(AdobeError adobeError) {callbackContext.success("Error to initialize " + adobeError.getErrorName());}
+                    public void fail(AdobeError adobeError) {
+                        callbackContext.error("Error to initialize " + adobeError.getErrorName());
+                    }
                     @Override
                     public void call(Object o) {
                         MobileCore.configureWithAppID(applicationID);

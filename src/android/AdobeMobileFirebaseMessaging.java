@@ -29,6 +29,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+
 public class AdobeMobileFirebaseMessaging extends FirebaseMessagingReceiveService {
 
     private static final String TAG = "AdobeMobileFirebaseMessaging";
@@ -49,79 +50,88 @@ public class AdobeMobileFirebaseMessaging extends FirebaseMessagingReceiveServic
     }
 
     private void sendNotification(RemoteMessage remoteMessage) {
-        MessagingPushPayload payload = new MessagingPushPayload(remoteMessage);
-        String CHANNEL_ID = "adobe_mobile_notification_channel";
-        String channelId = payload.getChannelId() == null ? CHANNEL_ID : payload.getChannelId();
+        try {
+            MessagingPushPayload payload = new MessagingPushPayload(remoteMessage);
+            String CHANNEL_ID = "adobe_mobile_notification_channel";
+            String channelId = payload.getChannelId() == null ? CHANNEL_ID : payload.getChannelId();
 
-        int importance = getImportanceFromPriority(payload.getNotificationPriority());
+            int importance = getImportanceFromPriority(payload.getNotificationPriority());
 
-        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            String CHANNEL_NAME = "Adobe Mobile Notifications Channel";
-            NotificationChannel channel = new NotificationChannel(channelId, CHANNEL_NAME, importance);
-            notificationManager.createNotificationChannel(channel);
-        }
-
-        Map<String, String> data = remoteMessage.getData();
-
-        String title = payload.getTitle();
-        String body = payload.getBody();
-        Intent intent = new Intent();
-        Context context = getApplicationContext();
-        String fulPackage = context.getPackageName() + ".MainActivity";
-        intent.setClassName(context.getPackageName(), fulPackage);
-        intent.putExtra(AppConstants.INTENT_TAB_KEY, 5);
-        intent.putExtra(AppConstants.INTENT_FROM_PUSH, true);
-
-        String messageId = remoteMessage.getMessageId();
-        int notificationId = messageId != null ? messageId.hashCode() : new Random().nextInt(100);
-
-        Messaging.addPushTrackingDetails(intent, messageId, data);
-
-        Intent dismissIntent = new Intent(this, NotificationDismissedReceiver.class);
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(this,
-                0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
-
-        PendingIntent onDismissPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 1001, dismissIntent, PendingIntent.FLAG_IMMUTABLE);
-
-        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        NotificationCompat.Builder notificationBuilder;
-        notificationBuilder =
-                new NotificationCompat.Builder(this, CHANNEL_ID)
-                        .setSmallIcon(com.adobe.marketing.mobile.assurance.R.drawable.ic_assurance_active)
-                        .setContentTitle(title)
-                        .setContentText(body)
-                        .setAutoCancel(true)
-                        .setSound(defaultSoundUri)
-                        .setContentIntent(pendingIntent)
-                        .setDeleteIntent(onDismissPendingIntent);
-
-        String url = payload.getImageUrl();
-        if (url != null && !url.isEmpty()) {
-            Future<Bitmap> bitmapTarget = Glide.with(this).asBitmap().load(url).submit();
-            Bitmap image;
-            try {
-                image = bitmapTarget.get();
-                notificationBuilder.setLargeIcon(image).setStyle(new NotificationCompat.BigPictureStyle().bigPicture(image).bigLargeIcon(null));
-            } catch (ExecutionException | InterruptedException e) {
-                Log.d("AdobeMobileFirebaseMessaging", Objects.requireNonNull(e.getMessage()));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                String CHANNEL_NAME = "Adobe Mobile Notifications Channel";
+                NotificationChannel channel = new NotificationChannel(channelId, CHANNEL_NAME, importance);
+                notificationManager.createNotificationChannel(channel);
             }
-        }
 
-        if (payload.getActionButtons() != null) {
-            List<MessagingPushPayload.ActionButton> buttons = payload.getActionButtons();
-            for (int i = 0; i < buttons.size(); i++) {
-                MessagingPushPayload.ActionButton obj = buttons.get(i);
-                String buttonName = obj.getLabel();
-                notificationBuilder.addAction(new NotificationCompat.Action(com.adobe.marketing.mobile.assurance.R.drawable.ic_assurance_active, buttonName, pendingIntent));
+            Map<String, String> data = remoteMessage.getData();
+
+            String title = payload.getTitle();
+            String body = payload.getBody();
+            Intent intent = new Intent();
+            Context context = getApplicationContext();
+            String fulPackage = context.getPackageName() + ".MainActivity";
+            intent.setClassName(context.getPackageName(), fulPackage);
+            intent.putExtra(AppConstants.INTENT_TAB_KEY, 5);
+            intent.putExtra(AppConstants.INTENT_FROM_PUSH, true);
+
+            String messageId = remoteMessage.getMessageId();
+            int notificationId = messageId != null ? messageId.hashCode() : new Random().nextInt(100);
+
+            Messaging.addPushTrackingDetails(intent, messageId, data);
+
+            Intent dismissIntent = new Intent(this, NotificationDismissedReceiver.class);
+
+            PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                    0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+
+            PendingIntent onDismissPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 1001, dismissIntent, PendingIntent.FLAG_IMMUTABLE);
+
+            Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+
+            NotificationCompat.Builder notificationBuilder;
+            notificationBuilder =
+                    new NotificationCompat.Builder(this, CHANNEL_ID)
+                            .setContentTitle(title)
+                            .setContentText(body)
+                            .setAutoCancel(true)
+                            .setSound(defaultSoundUri)
+                            .setContentIntent(pendingIntent)
+                            .setDeleteIntent(onDismissPendingIntent);
+
+            // Set push icon
+            setNotificationIcon(notificationBuilder, context);
+            setNotificationColor(notificationBuilder, context);
+
+            String url = payload.getImageUrl();
+            if (url != null && !url.isEmpty()) {
+                Future<Bitmap> bitmapTarget = Glide.with(this).asBitmap().load(url).submit();
+                Bitmap image;
+                try {
+                    image = bitmapTarget.get();
+                    notificationBuilder.setLargeIcon(image).setStyle(new NotificationCompat.BigPictureStyle().bigPicture(image).bigLargeIcon(null));
+                } catch (ExecutionException | InterruptedException e) {
+                    Log.d("AdobeMobileFirebaseMessaging", Objects.requireNonNull(e.getMessage()));
+                }
             }
-        }
 
-        Log.v(TAG, " --- Push Notification Id: "+notificationId);
-        Log.v(TAG, " --- Push Message Id: "+messageId);
-        notificationManager.notify(notificationId, notificationBuilder.build());
+            if (payload.getActionButtons() != null) {
+                List<MessagingPushPayload.ActionButton> buttons = payload.getActionButtons();
+                for (int i = 0; i < buttons.size(); i++) {
+                    MessagingPushPayload.ActionButton obj = buttons.get(i);
+                    String buttonName = obj.getLabel();
+                    int defaultIcon = getResourceId("mipmap/ic_launcher", context);
+                    notificationBuilder.addAction(new NotificationCompat.Action(defaultIcon, buttonName, pendingIntent));
+                }
+            }
+
+            Log.v(TAG, " --- Push Notification Id: " + notificationId);
+            Log.v(TAG, " --- Push Message Id: " + messageId);
+            notificationManager.notify(notificationId, notificationBuilder.build());
+        } catch (Exception exception) {
+             Log.d("AdobeMobileFirebaseMessaging", "Error to display Adobe Push notification: "+exception.getMessage());
+        }
     }
 
     private int getImportanceFromPriority(int priority) {
@@ -139,5 +149,45 @@ public class AdobeMobileFirebaseMessaging extends FirebaseMessagingReceiveServic
             default:
                 return NotificationManager.IMPORTANCE_NONE;
         }
+    }
+
+    private void setNotificationIcon(NotificationCompat.Builder notificationBuilder, Context context) {
+        try {
+            int defaultIcon = getResourceId("mipmap/ic_launcher", context);
+            int drawableIcon = getResourceId("drawable/notification_icon", context);
+
+            int finalIcon;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                finalIcon = (drawableIcon != 0) ? drawableIcon : defaultIcon;
+            } else {
+                finalIcon = defaultIcon;
+            }
+
+            notificationBuilder.setSmallIcon(finalIcon);
+
+        } catch (Exception ex) {
+            int defaultIcon = getResourceId("mipmap/ic_launcher", context);
+            notificationBuilder.setSmallIcon(defaultIcon);
+        }
+    }
+
+    private void setNotificationColor(NotificationCompat.Builder notificationBuilder, Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                int colorResId = getResourceId("color/cdv_splashscreen_background", context);
+                if (colorResId != 0) {
+                    int color = context.getResources().getColor(colorResId, context.getTheme());
+                    notificationBuilder.setColor(color);
+                } else {
+                    Log.e("setNotificationColor", "Color resource not found: color/cdv_splashscreen_background");
+                }
+            } catch (Exception ex) {
+                Log.e("setNotificationColor", "Error setting notification color: " + ex.getMessage(), ex);
+            }
+        }
+    }
+
+    private int getResourceId(String typeAndName, Context context) {
+        return context.getResources().getIdentifier(typeAndName, null, context.getPackageName());
     }
 }
