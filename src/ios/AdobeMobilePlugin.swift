@@ -60,15 +60,43 @@ class AdobeMobilePlugin: CDVPlugin {
         }
     }
     
+    func hexStringToData(_ hexString: String) -> Data? {
+        var data = Data()
+        var hex = hexString
+        while hex.count > 0 {
+            let subIndex = hex.index(hex.startIndex, offsetBy: 2)
+            let byteStr = String(hex[..<subIndex])
+            hex = String(hex[subIndex...])
+            if let byte = UInt8(byteStr, radix: 16) {
+                data.append(byte)
+            } else {
+                return nil // Invalid hex character
+            }
+        }
+        return data
+    }
+    
     @objc(setPushIdentifier:)
     func setPushIdentifier(command: CDVInvokedUrlCommand) {
-        if((command.arguments[0] as? String) != nil) {
-            let deviceToken = command.arguments[0] as? String ?? ""
-            // We are sending this value in didRegisterForRemoteNotificationsWithDeviceToken in AppDelegate
-            // MobileCore.setPushIdentifier(deviceToken.data(using: .utf8))
-            
-            let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
-            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+        if let deviceTokenHex = command.arguments[0] as? String {
+            if deviceTokenHex.lowercased() == "none" {
+                // Convert "none" string to Data and send it to unregister token in Adobe
+                let noneData = "none".data(using: .utf8)
+                MobileCore.setPushIdentifier(noneData)
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+                return
+            }
+    
+            // Convert hex string back to Data
+            if let deviceTokenData = hexStringToData(deviceTokenHex) {
+                MobileCore.setPushIdentifier(deviceTokenData)
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            } else {
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Invalid token format")
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            }
         } else {
             let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "You need to pass the token to use push registration")
             self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
