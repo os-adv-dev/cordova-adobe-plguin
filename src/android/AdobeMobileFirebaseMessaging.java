@@ -110,7 +110,7 @@ public class AdobeMobileFirebaseMessaging extends FirebaseMessagingReceiveServic
                 Bitmap image;
                 try {
                     image = bitmapTarget.get();
-                    notificationBuilder.setLargeIcon(image).setStyle(new NotificationCompat.BigPictureStyle().bigPicture(image).bigLargeIcon(null));
+                    notificationBuilder.setLargeIcon(image).setStyle(new NotificationCompat.BigPictureStyle().bigPicture(image).bigLargeIcon((Bitmap) null));
                 } catch (ExecutionException | InterruptedException e) {
                     Log.d("AdobeMobileFirebaseMessaging", Objects.requireNonNull(e.getMessage()));
                 }
